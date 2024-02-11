@@ -23,5 +23,6 @@ def getResponse(query):
         return json_content
     else:
         print(response.status_code)
-        return response
+        return " "
+
 
