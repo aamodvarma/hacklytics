@@ -1,22 +1,16 @@
-from datasets import load_dataset
 from openai import OpenAI
 import decoder_output
 import cut_text
-# import hotel_chatbot
+import hotel_chatbot
 import traversaal
 import streamlit as st
 from qdrant_client import QdrantClient
 from neural_searcher import NeuralSearcher
 
-def ares_api(query):
-
-    response_json = traversaal.getResponse(query);
-    # if response_json is not json:
-    #     return "Could not find information"
-    return (response_json['data']['response_text'])
 
 def home_page():
     st.title("Hotel Search")
+    st.session_state["value"] = None
 
     def search_hotels():
         query = st.text_input("Enter your hotel preferences:", placeholder ="clean and hceap hotel with good food and gym")
@@ -35,16 +29,11 @@ def home_page():
 
     def explore_hotel(hotel, query):
         # hotel_name = ' '.join(hotel['hotel_name'].split()[:2])
-
-        if "second_button" not in st.session_state:
-            st.session_state.second_button = False;
-
-        button = st.button(hotel['hotel_name'])
-        if button or st.session_state.second_button:
-            st.session_state.second_button= True;
+        button = st.checkbox(hotel['hotel_name'])
+        if button:
             st.session_state['value'] = hotel;
 
-        # st.write(decoder_output.decode(hotel['hotel_description'][:1000], query))
+        st.write(decoder_output.decode(hotel['hotel_description'][:1000], query))
         question = st.text_input(f"Enter a question about {hotel['hotel_name']}:");
 
         # if "load_state" not in st.session_state:
@@ -52,6 +41,15 @@ def home_page():
         # Perform semantic search when user submits query
         if question:
             st.write(ares_api(question + "for" + hotel['hotel_name'] + "located in" + hotel['country']))
+
+    def ares_api(query):
+
+        response_json = traversaal.getResponse(query);
+        # if response_json is not json:
+        #     return "Could not find information"
+        return (response_json['data']['response_text'])
+
+
 
 
     search_hotels()
@@ -63,7 +61,6 @@ def chat_page():
     st.session_state.value = None
     if (hotel == None):
         return;
-    return;
 
     st.write(hotel['hotel_name']);
     st.title("Conversation")
@@ -81,6 +78,10 @@ def chat_page():
     if "messages" not in st.session_state:
         st.session_state.messages = [{"role": "user", "content": prompt}]
 
+    # Display chat messages from history on app rerun
+    # keys_subset = list(st.session_state.messages.keys())[1:]
+    # subset_dict = {key: original_dict[key] for key in keys_subset}
+
 
 
     for message in st.session_state.messages[1:]:
@@ -90,11 +91,7 @@ def chat_page():
     # Accept user input
     if prompt := st.chat_input("What is up?"):
         # Add user message to chat history
-        ares_prompt  = ares_api(prompt) + "This is some extra information on the question i asked";
-
-        st.session_state.messages.append({"role": "user", "content": ares_prompt})
         st.session_state.messages.append({"role": "user", "content": prompt})
-
         # Display user message in chat message container
         with st.chat_message("user"):
             st.markdown(prompt)

@@ -2,6 +2,7 @@ import torch
 import os
 # Load the Falcon 7B model
 from openai import OpenAI
+import streamlit as st
 
 def decode(hotel_description, query):
     client = OpenAI(api_key=st.secrets["OPENAI_API_KEY"])
