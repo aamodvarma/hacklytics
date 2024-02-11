@@ -9,11 +9,14 @@ from neural_searcher import NeuralSearcher
 
 
 def home_page():
-    st.title("Hotel Search")
+    # st.title("TraverGo")
+
+    st.markdown("<h1 style='text-align: center; color: white;'>TraverGo</h1>", unsafe_allow_html=True)
+    st.markdown("<h2 style='text-align: center; color: white;'>Find any type of Hotel you want !</h2>", unsafe_allow_html=True)
     st.session_state["value"] = None
 
     def search_hotels():
-        query = st.text_input("Enter your hotel preferences:", placeholder ="clean and hceap hotel with good food and gym")
+        query = st.text_input("Enter your hotel preferences:", placeholder ="clean and cheap hotel with good food and gym")
 
         if "load_state" not in st.session_state:
             st.session_state.load_state = False;
@@ -28,26 +31,58 @@ def home_page():
                 explore_hotel(hotel, query)  # Call a separate function for each hotel
 
     def explore_hotel(hotel, query):
-        # hotel_name = ' '.join(hotel['hotel_name'].split()[:2])
+        if "decoder" not in st.session_state:
+            st.session_state['decoder'] = [0];
+
         button = st.checkbox(hotel['hotel_name'])
+
+
+        if not button:
+            if st.session_state.decoder == [0]:
+                x = (decoder_output.decode(hotel['hotel_description'][:1000], query))
+                st.session_state['value_1'] = x
+                st.session_state.decoder = [st.session_state.decoder[0] + 1]
+                st.write(x)
+
+            elif (st.session_state.decoder == [1]):
+                x = (decoder_output.decode(hotel['hotel_description'][:1000], query))
+                st.session_state['value_2'] = x
+
+                st.session_state.decoder = [st.session_state.decoder[0] + 1];
+                st.write(x);
+
+            elif st.session_state.decoder == [2]:
+                x = (decoder_output.decode(hotel['hotel_description'][:1000], query))
+                st.session_state['value_3'] = x;
+                st.session_state.decoder = [st.session_state.decoder[0] + 1];
+                st.write(x);
+
+
+            if (st.session_state.decoder[0] >= 3):
+                i = st.session_state.decoder[0] % 3
+                l = ['value_1', 'value_2', 'value_3']
+                st.session_state[l[i - 1]];
+                st.session_state.decoder = [st.session_state.decoder[0] + 1];
+
         if button:
-            st.session_state['value'] = hotel;
+            st.session_state["value"] = hotel
 
-        st.write(decoder_output.decode(hotel['hotel_description'][:1000], query))
+
+        # if (st.session_state.decoder[0] < 3):
+        #     st.write(decoder_output.decode(hotel['hotel_description'][:1000], query))
+        #     st.session_state.decoder = [st.session_state[0] + 1];
+        #
+
         question = st.text_input(f"Enter a question about {hotel['hotel_name']}:");
-
+            
+        if question:
+            st.write(ares_api(question + "for" + hotel['hotel_name'] + "located in" + hotel['country']))
         # if "load_state" not in st.session_state:
             # st.session_state.load_state = False;
         # Perform semantic search when user submits query
-        if question:
-            st.write(ares_api(question + "for" + hotel['hotel_name'] + "located in" + hotel['country']))
+        # if question:
 
-    def ares_api(query):
 
-        response_json = traversaal.getResponse(query);
-        # if response_json is not json:
-        #     return "Could not find information"
-        return (response_json['data']['response_text'])
 
 
 
@@ -56,6 +91,11 @@ def home_page():
     chat_page()
 
 
+def ares_api(query):
+    response_json = traversaal.getResponse(query);
+    # if response_json is not json:
+    #     return "Could not find information"
+    return (response_json['data']['response_text'])
 def chat_page():
     hotel = st.session_state["value"]
     st.session_state.value = None
@@ -73,7 +113,7 @@ def chat_page():
     if "openai_model" not in st.session_state:
         st.session_state["openai_model"] = "gpt-3.5-turbo"
 
-    prompt = f"Hotel Description - {hotel['hotel_description']}\n\n You are a hotel advisor, now I will ask you some questoins based on the above descriptoin. Give me objective answers to these questions. Now introduce yourself by naming the hotel and giving a 1 sentence hotel introduction"
+    prompt = f"{hotel['hotel_description'][:2000]}\n\n you are a hotel advisor now, you should give the best response based on the above text. i will now ask you some questions get ready"
     # Initialize chat history
     if "messages" not in st.session_state:
         st.session_state.messages = [{"role": "user", "content": prompt}]
@@ -90,8 +130,10 @@ def chat_page():
 
     # Accept user input
     if prompt := st.chat_input("What is up?"):
+        x = ares_api(prompt)
         # Add user message to chat history
-        st.session_state.messages.append({"role": "user", "content": prompt})
+        st.session_state.messages[0]['content'] += "\n" + x;
+        st.session_state.messages.append({"role": "assistant", "content": prompt})
         # Display user message in chat message container
         with st.chat_message("user"):
             st.markdown(prompt)

@@ -16,7 +16,7 @@ def decode(hotel_description, query):
 
     \"{query}\"
 
-    now tell me why the hotel might be a good fit for me given the requirements, make it consise in 5 to 6 sentences.
+    now tell me why the hotel might be a good fit for me given the requirements, make it consise.
     """
 
     stream = client.chat.completions.create(
